@@ -256,10 +256,85 @@ of the Python *stdlib*.
     }    
     ```
 
+### Bonus Points - Running Tests
+
+1. Add *pytest* as a dependency.
+
+    ```sh
+    # The ^6.2 version identifier for pytest is required due to other dependencies pulling down older versions of pytest
+    poetry add -D "pytest^6.2" pytest-asyncio
+    ```
+
+2. Ensure the `Ketchup/tests/test_ketchup.py` file exists with the following content:
+
+    ```python
+    import pytest
+
+    from ketchup import __version__, webapp
+
+
+    def test_version():
+        assert __version__ == "0.1.0"
+
+
+    @pytest.mark.asyncio
+    class TestViews:
+        async def test_index(self):
+            assert "Welcome" in (await webapp.index())
+    ```
+
+3. Run the tests by issuing the following from *inside* the `Ketchup` directory.
+
+    ```sh
+    poetry run pytest
+    ```
+
+    The result should be something like:
+
+    ```text
+    =============================== test session starts ===============================
+    platform linux -- Python 3.9.5, pytest-5.4.3, py-1.10.0, pluggy-0.13.1
+    rootdir: /home/ubuntu/dev/Ketchup
+    plugins: anyio-3.3.1, asyncio-0.15.1
+    collected 2 items
+
+    tests/test_ketchup.py ..                                                    [100%]
+
+    ================================ 2 passed in 0.16s ================================
+    ```
+
+### Coding Conventions
+
+It is the author's advice to add the following to help with formatting all code in a standard way.
+
+- Add some developer dependencies:
+
+    ```sh
+    poetry add -D black isort
+    ```
+
+    The standard *Python* method for activating these formatters would be to append something like the following to `Ketchup/pyproject.toml`.
+
+    ```toml
+    exclude = '''
+    /(
+        \.git
+      | \.tox
+      | \.venv
+      | build
+      | dist
+    )/   
+    '''
+    line-length = 119  # standard editor width used by github
+
+    [tool.isort]
+    profile = "black"
+    ```
+
 ### Part 3a: Persistence with SQLAlchemy and PostgreSQL
 
 This is where the project actually starts getting useful.  We are building a **ToDo** application that can persist
-todo records to a PostgreSQL database.
+todo records to a PostgreSQL database.  The following steps assume you are within the `Ketchup` directory.
 
 1. Add *SQLAlchemy*, *alembic*, and *asyncpg* as a dependencies.
 
@@ -421,22 +496,37 @@ The file should look like this:
         completed: typing.Optional[datetime.datetime] = None
     ```
 
-5. Use *Alembic* to auto-generate the first revision migration file.
+5. Create new `Ketchup/ketchup/base.py` file with the following contents for configuration.
+
+    ```python
+    import os
+    import typing
+
+
+    class Config:
+        DB_URI: str = "postgresql+asyncpg://localhost/ketchup"
+
+        def __init__(self, prefix: str = "KETCHUP_"):
+            for name, type_ in typing.get_type_hints(self).items():
+                envname = prefix + name
+                if envname in os.environ:
+                    setattr(self, name, type_(os.environ[envname]))
+
+
+    config = Config()
+    ```
+
+6. At this point, make sure PostgreSQL has beeng configured properly with an empty
+database setup and referenced by either `config.DB_URI` or by setting os env variable
+`KETCHUP_DB_URI`.  Once that's been done, use *Alembic* to auto-generate the first revision migration file.
 
     ```sh
     poetry run alembic revision --autogenerate -m "New ketchup_todos table"
     ```
 
-6. At this point, make sure PostgreSQL has beeng configured properly with an empty
-database setup and referenced by either `config.DB_URI` or by setting os env variable
-`KETCHUP_DB_URI`.  Once that's been done, run the following to setup the necessary
-database schema.
+7. Run the following to setup the necessary database schema.
 
     ```sh
-
-    # before running the following, make sure the appropriate postgres database has been created
-    # the postgresql connection can be overridden by using something like:
-    #   export KETCHUP_DB_URI=postgresql+asyncpg://someuser:somepass@somehost.com/ketchup
     poetry run alembic upgrade head
     ```
 
@@ -606,23 +696,93 @@ graphql queries.
 
     ```
 
-### Bonus Points
+### Bonus Points - Adding Query Tests
 
-#### Running Tests
+1. Add new `Ketchup/tests/conftest.py` file to setup *pytest* fixtures.
 
-1. Add *pytest* as a dependency.
+    ```python
+    import asyncio
+    import uuid
+    from urllib.parse import urlparse, urlunparse
 
-    ```sh
-    # The ^6.2 version identifier for pytest is required due to other dependencies pulling down older versions of pytest
-    poetry add -D "pytest^6.2" pytest-asyncio
+    import pytest
+    from sqlalchemy import pool, text
+    from sqlalchemy.ext.asyncio import (
+        AsyncSession,
+        async_scoped_session,
+        create_async_engine,
+    )
+    from sqlalchemy.orm import close_all_sessions, sessionmaker
+
+    from ketchup import __version__, base, sqlamodels
+
+
+    def test_version():
+        assert __version__ == "0.1.0"
+
+
+    @pytest.fixture(scope="session")
+    def event_loop():
+        loop = asyncio.get_event_loop_policy().new_event_loop()
+        yield loop
+        loop.close()
+
+
+    @pytest.fixture(scope="session")
+    def session_monkeypatch():
+        mpatch = pytest.MonkeyPatch()
+        yield mpatch
+        mpatch.undo()
+
+
+    @pytest.fixture(scope="session")
+    async def empty_db(session_monkeypatch: pytest.MonkeyPatch):
+        parsed = urlparse(base.config.DB_URI)
+        dbname = parsed.path[1:] + "_test_" + uuid.uuid4().hex
+
+        newuri = urlunparse([parsed[0], parsed[1], "/template1", parsed[3], parsed[4], parsed[5]])
+
+        anony_engine = create_async_engine(
+            newuri,
+            future=True,
+            poolclass=pool.NullPool,
+            isolation_level="AUTOCOMMIT",
+        )
+
+        async with anony_engine.connect() as conn:
+            await (await conn.execution_options(isolation_level="AUTOCOMMIT")).execute(text(f"CREATE DATABASE {dbname}"))
+
+        async_engine = None
+        async_session_factory = None
+        make_session = None
+        try:
+            newuri = urlunparse([parsed[0], parsed[1], "/" + dbname, parsed[3], parsed[4], parsed[5]])
+            async_engine = create_async_engine(newuri, future=True)
+            async_session_factory = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)  # type: ignore - having some pyright issues
+            make_session = async_scoped_session(async_session_factory, scopefunc=asyncio.current_task)
+            session_monkeypatch.setattr(sqlamodels, "make_session", make_session)
+
+            async with async_engine.begin() as conn:
+                await conn.run_sync(sqlamodels.mapper_registry.metadata.create_all)
+
+            yield
+        finally:
+            close_all_sessions()
+            if async_engine is not None:
+                try:
+                    await async_engine.dispose()
+                except Exception:
+                    ...
+            async with anony_engine.connect() as conn:
+                await (await conn.execution_options(isolation_level="AUTOCOMMIT")).execute(text(f"DROP DATABASE {dbname}"))
     ```
 
-2. Ensure the `Ketchup/tests/test_ketchup.py` file exists with the following content:
+2. Update the `Ketchup/tests/test_ketchup.py` file to have the following content.
 
     ```python
     import pytest
 
-    from ketchup import __version__, webapp
+    from ketchup import __version__, gqlschema, webapp
 
 
     def test_version():
@@ -633,6 +793,24 @@ graphql queries.
     class TestViews:
         async def test_index(self):
             assert "Welcome" in (await webapp.index())
+
+
+    @pytest.mark.asyncio
+    @pytest.mark.usefixtures("empty_db")
+    class TestGraphQuery:
+        async def _create(self, text: str) -> int:
+            result = await gqlschema.schema.execute('mutation { todos { addTodo(text: "hello world") { id } } }')
+            assert result.data is not None
+            assert "id" in result.data["todos"]["addTodo"]
+
+            newid = result.data["todos"]["addTodo"]["id"]
+            return newid
+
+        async def test_create_remove(self):
+            newid = await self._create("hello world")
+            result = await gqlschema.schema.execute("mutation { todos { removeTodo(id: %s) } }" % newid)
+            assert result.data is not None
+            assert result.data["todos"]["removeTodo"] == True
     ```
 
 3. Run the tests by issuing the following from *inside* the `Ketchup` directory.
@@ -648,39 +826,11 @@ graphql queries.
     platform linux -- Python 3.9.5, pytest-5.4.3, py-1.10.0, pluggy-0.13.1
     rootdir: /home/ubuntu/dev/Ketchup
     plugins: anyio-3.3.1, asyncio-0.15.1
-    collected 2 items
+    collected 3 items
 
-    tests/test_ketchup.py ..                                                    [100%]
+    tests/test_ketchup.py ...                                                   [100%]
 
-    ================================ 2 passed in 0.16s ================================
-    ```
-
-#### Coding Conventions
-
-It is the author's advice to add the following to help with formatting all code in a standard way.
-
-- Add some developer dependencies:
-
-    ```sh
-    poetry add -D black isort
-    ```
-
-    The standard *Python* method for activating these formatters would be to append something like the following to `Ketchup/pyproject.toml`.
-
-    ```toml
-    exclude = '''
-    /(
-        \.git
-      | \.tox
-      | \.venv
-      | build
-      | dist
-    )/   
-    '''
-    line-length = 119  # standard editor width used by github
-
-    [tool.isort]
-    profile = "black"
+    ================================ 3 passed in 0.36s ================================
     ```
 
 ## Frameworks/Components Reference

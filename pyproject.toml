@@ -33,7 +33,7 @@ exclude = '''
   | dist
 )/
 '''
-line-length = 119  # standard editor width used by github
+line-length = 119
 
 [tool.isort]
 profile = "black"
