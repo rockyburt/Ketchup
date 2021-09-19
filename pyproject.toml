@@ -19,3 +19,18 @@ pytest-asyncio = "^0.15.1"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+exclude = '''
+/(
+    \.git
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+line-length = 119  # standard editor width used by github
+
+[tool.isort]
+profile = "black"
