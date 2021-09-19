@@ -55,7 +55,7 @@ async def empty_db(session_monkeypatch: pytest.MonkeyPatch):
     try:
         newuri = urlunparse([parsed[0], parsed[1], "/" + dbname, parsed[3], parsed[4], parsed[5]])
         async_engine = create_async_engine(newuri, future=True)
-        async_session_factory = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
+        async_session_factory = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)  # type: ignore - having some pyright issues
         make_session = async_scoped_session(async_session_factory, scopefunc=asyncio.current_task)
         session_monkeypatch.setattr(sqlamodels, "make_session", make_session)
 

@@ -17,7 +17,7 @@ mapper_registry = registry()
 Base = mapper_registry.generate_base()
 
 async_engine = create_async_engine(base.config.DB_URI, future=True)
-async_session_factory = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
+async_session_factory = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)  # type: ignore - having some pyright issues
 make_session = async_scoped_session(async_session_factory, scopefunc=asyncio.current_task)
 
 
