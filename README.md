@@ -34,9 +34,10 @@ approach to asynchronous I/O programming.
     poetry new Ketchup
     ```
 
-3. Add *Quart* to Poetry's requirements files.  Also include *Hypercorn* for it's ASGI running expertise.
+3. Go into the newly created `Ketchup` directory and add *Quart* to Poetry's requirements files. Also include Hypercorn for it's ASGI running expertise.
 
     ```sh
+    cd Ketchup
     poetry add Quart hypercorn
     ```
 
@@ -667,15 +668,14 @@ It is the author's advice to add the following to help with formatting all code 
     The standard *Python* method for activating these formatters would be to append something like the following to `Ketchup/pyproject.toml`.
 
     ```toml
-    [tool.black]
     exclude = '''
     /(
         \.git
-    | \.tox
-    | \.venv
-    | build
-    | dist
-    )/
+      | \.tox
+      | \.venv
+      | build
+      | dist
+    )/   
     '''
     line-length = 119  # standard editor width used by github
 
