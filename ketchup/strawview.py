@@ -10,8 +10,7 @@ from quart.typing import ResponseReturnValue
 from quart.views import View
 from strawberry.exceptions import MissingQueryError
 from strawberry.file_uploads.utils import replace_placeholders_with_files
-from strawberry.http import (GraphQLHTTPResponse, parse_request_data,
-                             process_result)
+from strawberry.http import GraphQLHTTPResponse, parse_request_data, process_result
 from strawberry.schema import BaseSchema
 from strawberry.types import ExecutionResult
 

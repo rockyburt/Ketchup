@@ -1,21 +1,40 @@
 [tool.poetry]
+authors = ["Rocky Burt <rocky.burt@gmail.com>"]
+description = ""
 name = "Ketchup"
 version = "0.1.0"
-description = ""
-authors = ["Rocky Burt <rocky.burt@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+Hypercorn = "^0.11.2"
 Quart = "^0.15.1"
-strawberry-graphql = {extras = ["asgi"], version = "^0.77.10"}
 SQLAlchemy = "^1.4.23"
+asyncpg = "^0.24.0"
+python = "^3.9"
+strawberry-graphql = "^0.77.10"
+alembic = "^1.7.3"
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
 black = "^21.9b0"
 isort = "^5.9.3"
+pytest = "^6.2"
 pytest-asyncio = "^0.15.1"
+sqlalchemy2-stubs = "^0.0.2-alpha.15"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0"]
+
+[tool.black]
+exclude = '''
+/(
+    \.git
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+line-length = 119
+
+[tool.isort]
+profile = "black"

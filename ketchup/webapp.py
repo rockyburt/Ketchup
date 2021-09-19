@@ -1,15 +1,15 @@
 import asyncio
 
 from hypercorn.asyncio import serve
-from hypercorn.config import Config
+from hypercorn.config import Config as HypercornConfig
 from quart import Quart
-from strawberry import Schema
 
-from ketchup.gqlschema import Query
+from ketchup import base
+from ketchup.gqlschema import schema
 from ketchup.strawview import GraphQLView
 
 app = Quart("ketchup")
-schema = Schema(Query)
+app.config.from_object(base.config)
 
 
 app.add_url_rule("/graphql", view_func=GraphQLView.as_view("graphql_view", schema=schema))
@@ -21,10 +21,10 @@ async def index():
 
 
 def hypercorn_serve():
-    config = Config()
-    config.bind = ["0.0.0.0:5000"]
-    config.use_reloader = True
-    asyncio.run(serve(app, config, shutdown_trigger=lambda: asyncio.Future()))
+    hypercorn_config = HypercornConfig()
+    hypercorn_config.bind = ["0.0.0.0:5000"]
+    hypercorn_config.use_reloader = True
+    asyncio.run(serve(app, hypercorn_config, shutdown_trigger=lambda: asyncio.Future()))
 
 
 if __name__ == "__main__":

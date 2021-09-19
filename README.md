@@ -25,10 +25,10 @@ approach to asynchronous I/O programming.
     poetry new Ketchup
     ```
 
-3. Add *Quart* to Poetry's requirements files.
+3. Add *Quart* to Poetry's requirements files.  Also include *Hypercorn* for it's ASGI running expertise.
 
     ```sh
-    poetry add Quart
+    poetry add Quart hypercorn
     ```
 
     At the time of writing this doc, the versions installed were:
@@ -70,7 +70,7 @@ of the Python *stdlib*.
 1. Add *Strawberry-GraphQL* to Poetry's requirements files.
 
     ```sh
-    poetry add Strawberry-graphql[asgi]  # asgi deps are required since no native Quart support
+    poetry add Strawberry-graphql
     ```
 
     At the time of writing this doc, the versions installed were:
@@ -246,6 +246,32 @@ of the Python *stdlib*.
     }    
     ```
 
+### Part 3: Persistence with SQLAlchemy and PostgreSQL
+
+1. Add *SQLAlchemy*, *alembic*, and *asyncpg* as a dependencies.
+
+    *As of the writing of this tutorial, SQLAlchemy 1.4.23 is the most recent ... with SQLAlchemy 1.4.x the first version to
+    include asyncio support.  In addition, `asyncio` support comes only from PostgreSQL and the `asyncpg` db adapter.*
+
+    ```sh
+    poetry add sqlalchemy alembic asyncpg
+
+    # for anyone using mypy/pylance/pyright/vscode ... adding the following should provide better type hint support
+    poetry add -D sqlalchemy2.stubs
+    ```
+
+2. Initialize the *Alembic* database migration framework.
+
+    ```sh
+    poetry run alembic init --template async alembic
+    poetry run alembic revision --autogenerate -m "New ketchup_todos table"
+
+    # before running the following, make sure the appropriate postgres database has been created
+    # the postgresql connection can be overridden by using something like:
+    #   export KETCHUP_DB_URI=postgresql+asyncpg://someuser:somepass@somehost.com/ketchup
+    poetry run alembic upgrade head
+    ```
+
 ### Bonus Points
 
 #### Running Tests
@@ -253,7 +279,8 @@ of the Python *stdlib*.
 1. Add *pytest* as a dependency.
 
     ```sh
-    poetry add -D pytest pytest-asyncio
+    # The ^6.2 version identifier for pytest is required due to other dependencies pulling down older versions of pytest
+    poetry add -D "pytest^6.2" pytest-asyncio
     ```
 
 2. Ensure the `Ketchup/tests/test_ketchup.py` file exists with the following content:
@@ -304,6 +331,25 @@ It is the author's advice to add the following to help with formatting all code 
     poetry add -D black isort
     ```
 
+    The standard *Python* method for activating these formatters would be to append something like the following to `Ketchup/pyproject.toml`.
+
+    ```toml
+    [tool.black]
+    exclude = '''
+    /(
+        \.git
+    | \.tox
+    | \.venv
+    | build
+    | dist
+    )/
+    '''
+    line-length = 119  # standard editor width used by github
+
+    [tool.isort]
+    profile = "black"
+    ```
+
 ## Frameworks/Components Reference
 
 [Quart](https://pgjones.gitlab.io/quart/index.html)
@@ -311,3 +357,12 @@ It is the author's advice to add the following to help with formatting all code 
 
 [Strawberry GraphQL](https://strawberry.rocks/docs/integrations/asgi)
 : A GraphQL library for Python enabling the building of GraphQL web apps using Python dataclasses
+
+[SQLAlchemy](https://www.sqlalchemy.org/)
+: Python ORM mapper (with `asyncio` support as of v1.4).
+
+[asyncpg](https://github.com/MagicStack/asyncpg)
+: A PostgreSQL client library for Python using `asyncio`.
+
+[Alembic](https://alembic.sqlalchemy.org/en/latest/)
+: A database migration tool for *SQLAlchemy*.
