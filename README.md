@@ -3,6 +3,13 @@
 *Ketchup* is a simple web app for learning how to build web apps using recent Python technologies
 with an emphasis on asynchronous I/O (asyncio) programming.
 
+Project Source
+: <https://github.com/rockyburt/Ketchup>
+
+Part 1 and 2 Source:
+: <https://github.com/rockyburt/Ketchup/tree/part/1-2>
+
+
 ## `Quart` + `Strawberry-GraphQL` Tutorial
 
 The following tutorial explains how to use *Quart* and *Strawberry-GraphQL* to build a simple web application with
