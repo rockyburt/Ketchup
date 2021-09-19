@@ -9,7 +9,6 @@ Project Source
 Part 1 and 2 Source:
 : <https://github.com/rockyburt/Ketchup/tree/part/1-2>
 
-
 ## `Quart` + `Strawberry-GraphQL` Tutorial
 
 The following tutorial explains how to use *Quart* and *Strawberry-GraphQL* to build a simple web application with
@@ -32,10 +31,10 @@ approach to asynchronous I/O programming.
     poetry new Ketchup
     ```
 
-3. Add *Quart* to Poetry's requirements files.
+3. Add *Quart* to Poetry's requirements files. Also include Hypercorn for it's ASGI running expertise.
 
     ```sh
-    poetry add Quart
+    poetry add Quart hypercorn
     ```
 
     At the time of writing this doc, the versions installed were:
@@ -77,7 +76,7 @@ of the Python *stdlib*.
 1. Add *Strawberry-GraphQL* to Poetry's requirements files.
 
     ```sh
-    poetry add Strawberry-graphql[asgi]  # asgi deps are required since no native Quart support
+    poetry add Strawberry-graphql
     ```
 
     At the time of writing this doc, the versions installed were:
