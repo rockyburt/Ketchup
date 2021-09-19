@@ -255,7 +255,10 @@ of the Python *stdlib*.
     }    
     ```
 
-### Part 3: Persistence with SQLAlchemy and PostgreSQL
+### Part 3a: Persistence with SQLAlchemy and PostgreSQL
+
+This is where the project actually starts getting useful.  We are building a **ToDo** application that can persist
+todo records to a PostgreSQL database.
 
 1. Add *SQLAlchemy*, *alembic*, and *asyncpg* as a dependencies.
 
@@ -273,12 +276,286 @@ of the Python *stdlib*.
 
     ```sh
     poetry run alembic init --template async alembic
+    ```
+
+3. Modify `Ketchup/alembic/env.py` so that it uses the same postgres db uri as the rest of the web app.  The file should look like this:
+
+    ```python
+    import asyncio
+    from logging.config import fileConfig
+
+    from sqlalchemy import pool
+    from sqlalchemy.ext.asyncio import create_async_engine
+
+    from alembic import context
+    from ketchup import sqlamodels, base
+
+    # this is the Alembic Config object, which provides
+    # access to the values within the .ini file in use.
+    config = context.config
+
+    # Interpret the config file for Python logging.
+    # This line sets up loggers basically.
+    assert config.config_file_name is not None
+    fileConfig(config.config_file_name)
+
+    # add your model's MetaData object here
+    # for 'autogenerate' support
+    # from myapp import mymodel
+    # target_metadata = mymodel.Base.metadata
+    target_metadata = sqlamodels.mapper_registry.metadata
+
+    # other values from the config, defined by the needs of env.py,
+    # can be acquired:
+    # my_important_option = config.get_main_option("my_important_option")
+    # ... etc.
+
+
+    def run_migrations_offline():
+        """Run migrations in 'offline' mode.
+
+        This configures the context with just a URL
+        and not an Engine, though an Engine is acceptable
+        here as well.  By skipping the Engine creation
+        we don't even need a DBAPI to be available.
+
+        Calls to context.execute() here emit the given string to the
+        script output.
+
+        """
+        url = config.get_main_option("sqlalchemy.url")
+        context.configure(
+            url=url,
+            target_metadata=target_metadata,
+            literal_binds=True,
+            dialect_opts={"paramstyle": "named"},
+        )
+
+        with context.begin_transaction():
+            context.run_migrations()
+
+
+    def do_run_migrations(connection):
+        context.configure(connection=connection, target_metadata=target_metadata)
+
+        with context.begin_transaction():
+            context.run_migrations()
+
+
+    async def run_migrations_online():
+        """Run migrations in 'online' mode.
+
+        In this scenario we need to create an Engine
+        and associate a connection with the context.
+
+        """
+
+        connectable = create_async_engine(
+            base.config.DB_URI,
+            future=True,
+            poolclass=pool.NullPool,
+        )
+
+        async with connectable.connect() as connection:
+            await connection.run_sync(do_run_migrations)
+
+
+    if context.is_offline_mode():
+        run_migrations_offline()
+    else:
+        asyncio.run(run_migrations_online())
+    ```
+
+4. Setup the initial *SQLAlchemy* models by creating ``Ketchup/ketchup/sqlamodels.py``.
+
+    ```python
+    import asyncio
+    import dataclasses
+    import datetime
+    import typing
+
+    from sqlalchemy import Column, DateTime, Integer, Table, Text
+    from sqlalchemy.ext.asyncio import (
+        AsyncSession,
+        async_scoped_session,
+        create_async_engine,
+    )
+    from sqlalchemy.orm import registry, sessionmaker
+
+    from ketchup import base
+
+    mapper_registry = registry()
+    Base = mapper_registry.generate_base()
+
+    async_engine = create_async_engine(base.config.DB_URI, future=True)
+    async_session_factory = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)  # type: ignore - having some pyright issues
+    make_session = async_scoped_session(async_session_factory, scopefunc=asyncio.current_task)
+
+
+    @mapper_registry.mapped
+    @dataclasses.dataclass
+    class Todo:
+        __table__ = Table(
+            "ketchup_todo",
+            mapper_registry.metadata,
+            Column(
+                "id",
+                Integer,
+                primary_key=True,
+                autoincrement=True,
+                nullable=False,
+            ),
+            Column("text", Text(), nullable=False),
+            Column("created", DateTime(True), nullable=False),
+            Column("completed", DateTime(True), nullable=True),
+        )
+
+        id: int = dataclasses.field(init=False)
+        text: str
+        created: datetime.datetime = dataclasses.field(
+            default_factory=lambda: datetime.datetime.now(datetime.timezone.utc)
+        )
+        completed: typing.Optional[datetime.datetime] = None
+    ```
+
+5. Use *Alembic* to auto-generate the first revision migration file.
+
+    ```sh
     poetry run alembic revision --autogenerate -m "New ketchup_todos table"
 
     # before running the following, make sure the appropriate postgres database has been created
     # the postgresql connection can be overridden by using something like:
     #   export KETCHUP_DB_URI=postgresql+asyncpg://someuser:somepass@somehost.com/ketchup
     poetry run alembic upgrade head
+    ```
+
+### Part 3b: Making the GraphQL schema useful
+
+1. Modify `Ketchup/ketchup/gqlschema.py` to have basic CRUD access via *Query* and *Mutation*.
+
+    ```python
+    import datetime
+    import typing
+
+    import strawberry
+    from sqlalchemy.future import select
+
+    from ketchup import sqlamodels
+
+    strawberry.type(sqlamodels.Todo)
+
+
+    @strawberry.type
+    class Query:
+        todos: list[sqlamodels.Todo]
+
+        @strawberry.field(name="todos")
+        async def _todos_resolver(self) -> list[sqlamodels.Todo]:
+            session = sqlamodels.make_session()
+            items = (await session.execute(select(sqlamodels.Todo))).scalars()
+            todos = typing.cast(list[sqlamodels.Todo], items)
+            return todos
+
+
+    @strawberry.type(description="Standard CRUD operations for todo's")
+    class TodoOps:
+        @strawberry.mutation
+        async def add_todo(self, text: str) -> sqlamodels.Todo:
+            todo = sqlamodels.Todo(text=text)
+            session = sqlamodels.make_session()
+            session.add(todo)
+            await session.commit()
+            return todo
+
+        @strawberry.mutation
+        async def remove_todo(self, id: int) -> bool:
+            session = sqlamodels.make_session()
+            item = (await session.execute(select(sqlamodels.Todo).where(sqlamodels.Todo.id == id))).scalars().first()
+            todo = typing.cast(typing.Optional[sqlamodels.Todo], item)
+
+            if todo is None:
+                return False
+
+            await session.delete(todo)
+            await session.commit()
+            return True
+
+        @strawberry.mutation
+        async def set_todo_completed(self, id: int, flag: bool = True) -> typing.Optional[sqlamodels.Todo]:
+            session = sqlamodels.make_session()
+            item = (await session.execute(select(sqlamodels.Todo).where(sqlamodels.Todo.id == id))).scalars().first()
+            todo = typing.cast(typing.Optional[sqlamodels.Todo], item)
+
+            if todo is None:
+                return None
+
+            todo.completed = datetime.datetime.now(datetime.timezone.utc) if flag else None
+
+            await session.commit()
+            return todo
+
+        @strawberry.mutation
+        async def modify_todo_text(self, id: int, text: str) -> typing.Optional[sqlamodels.Todo]:
+            session = sqlamodels.make_session()
+            item = (await session.execute(select(sqlamodels.Todo).where(sqlamodels.Todo.id == id))).scalars().first()
+            todo = typing.cast(typing.Optional[sqlamodels.Todo], item)
+
+            if todo is None:
+                return None
+
+            todo.text = text
+
+            await session.commit()
+            return todo
+
+
+    @strawberry.type
+    class Mutation:
+        todos: TodoOps
+
+        @strawberry.field(name="todos")
+        def _todos_resolver(self) -> TodoOps:
+            return TodoOps()
+
+
+    schema = strawberry.Schema(query=Query, mutation=Mutation)
+    ```
+
+2. The ``Ketchup/ketchup/webapp.py` file will need to be updated to accomodate the *SQLAlchemy* database access as well as
+the new mutation support.
+
+    ```python
+    import asyncio
+
+    from hypercorn.asyncio import serve
+    from hypercorn.config import Config as HypercornConfig
+    from quart import Quart
+
+    from ketchup import base
+    from ketchup.gqlschema import schema
+    from ketchup.strawview import GraphQLView
+
+    app = Quart("ketchup")
+    app.config.from_object(base.config)
+
+
+    app.add_url_rule("/graphql", view_func=GraphQLView.as_view("graphql_view", schema=schema))
+
+
+    @app.route("/")
+    async def index():
+        return 'Welcome to Ketchup!  Please see <a href="/graphql">Graph<em>i</em>QL</a> to interact with the GraphQL endpoint.'
+
+
+    def hypercorn_serve():
+        hypercorn_config = HypercornConfig()
+        hypercorn_config.bind = ["0.0.0.0:5000"]
+        hypercorn_config.use_reloader = True
+        asyncio.run(serve(app, hypercorn_config, shutdown_trigger=lambda: asyncio.Future()))
+
+
+    if __name__ == "__main__":
+        hypercorn_serve()
     ```
 
 ### Bonus Points
