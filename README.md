@@ -9,6 +9,8 @@ Project Source
 Part 1 and 2 Source:
 : <https://github.com/rockyburt/Ketchup/tree/part/1-2>
 
+Part 3 Source:
+: <https://github.com/rockyburt/Ketchup/tree/part/3>
 
 ## `Quart` + `Strawberry-GraphQL` Tutorial
 
