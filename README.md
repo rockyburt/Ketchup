@@ -253,7 +253,8 @@ of the Python *stdlib*.
 1. Add *pytest* as a dependency.
 
     ```sh
-    poetry add -D pytest pytest-asyncio
+    # The ^6.2 version identifier for pytest is required due to other dependencies pulling down older versions of pytest
+    poetry add -D "pytest^6.2" pytest-asyncio
     ```
 
 2. Ensure the `Ketchup/tests/test_ketchup.py` file exists with the following content:
@@ -302,6 +303,25 @@ It is the author's advice to add the following to help with formatting all code 
 
     ```sh
     poetry add -D black isort
+    ```
+
+    The standard *Python* method for activating these formatters would be to append something like the following to `Ketchup/pyproject.toml`.
+
+    ```toml
+    [tool.black]
+    exclude = '''
+    /(
+        \.git
+    | \.tox
+    | \.venv
+    | build
+    | dist
+    )/
+    '''
+    line-length = 119  # standard editor width used by github
+
+    [tool.isort]
+    profile = "black"
     ```
 
 ## Frameworks/Components Reference
