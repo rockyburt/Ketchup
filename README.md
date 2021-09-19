@@ -269,6 +269,7 @@ todo records to a PostgreSQL database.
     poetry add sqlalchemy alembic asyncpg
 
     # for anyone using mypy/pylance/pyright/vscode ... adding the following should provide better type hint support
+    # but is optional and won't affect the application
     poetry add -D sqlalchemy2.stubs
     ```
 
@@ -278,7 +279,8 @@ todo records to a PostgreSQL database.
     poetry run alembic init --template async alembic
     ```
 
-3. Modify `Ketchup/alembic/env.py` so that it uses the same postgres db uri as the rest of the web app.  The file should look like this:
+3. Modify `Ketchup/alembic/env.py` so that it uses the same postgres db configuration as the rest of the web app.
+The file should look like this:
 
     ```python
     import asyncio
@@ -422,6 +424,14 @@ todo records to a PostgreSQL database.
 
     ```sh
     poetry run alembic revision --autogenerate -m "New ketchup_todos table"
+    ```
+
+6. At this point, make sure PostgreSQL has beeng configured properly with an empty
+database setup and referenced by either `config.DB_URI` or by setting os env variable
+`KETCHUP_DB_URI`.  Once that's been done, run the following to setup the necessary
+database schema.
+
+    ```sh
 
     # before running the following, make sure the appropriate postgres database has been created
     # the postgresql connection can be overridden by using something like:
@@ -556,6 +566,43 @@ the new mutation support.
 
     if __name__ == "__main__":
         hypercorn_serve()
+    ```
+
+3. At this point it should be possible to restart the web application and start playing with the actual
+graphql queries.
+
+    ```sh
+    poetry run python -m ketchup.webapp
+    ```
+
+    And the go to <http://localhost:5000/graphql> to test queries/mutations.  Some examples are:
+
+    ```graphql
+    # Query #1
+    # The following will show all todos persisted to the database .. upon first query it should return an empty
+    # result set
+    query {
+      todos {
+        id
+        text
+        created
+        completed
+      }
+    }
+    ```
+
+    ```graphql
+    # Mutation #1
+    # This will create our first todo record and show ups the generated ID.  After running this at least once
+    # it should be possible to re-run "Query #1" above and see data that was created and saved.
+    mutation {
+      todos {
+        addTodo(text: "Hello World") {
+          id
+        }
+      }
+    }
+
     ```
 
 ### Bonus Points
