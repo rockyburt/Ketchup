@@ -889,7 +889,7 @@ it helps setup the required *Python* and *PostgreSQL* versions.
         hostname: ketchup-webapp
         working_dir: /root/Ketchup
         # command: ["python", "-m", "ketchup.webapp"]
-        command: ["sh", "-c", "poetry update && poetry run alembic upgrade head && exec poetry run python -m ketchup.webapp"]
+        command: ["sh", "-c", "poetry install && poetry run alembic upgrade head && exec poetry run python -m ketchup.webapp"]
         ports:
         - "5000:5000"
         volumes:
