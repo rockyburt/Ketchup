@@ -950,13 +950,11 @@ it helps setup the required *Python* and *PostgreSQL* versions.
 [Alembic](https://alembic.sqlalchemy.org/en/latest/)
 : A database migration tool for *SQLAlchemy*.
 
-<<<<<<< HEAD
 [Uvicorn](https://www.uvicorn.org/)
 An *ASGI* server implementation that uses *uvloop* and *httptools*.
-=======
+
 [Docker](https://docs.docker.com/)
 A popular platform for building and operating container images.
 
 [docker-compose](https://docs.docker.com/compose/)
 A tool for defining and running multi-container *Docker* applications.
->>>>>>> dev/rocky/docker-support
