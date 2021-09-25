@@ -850,6 +850,62 @@ graphql queries.
     ================================ 3 passed in 0.36s ================================
     ```
 
+## Appendices
+
+### Appendix A: Setting up Docker and Docker Compose
+
+Docker enables developers to more easily manage system depdendencies and lock requirements.  In the case of this tutorial,
+it helps setup the required *Python* and *PostgreSQL* versions.
+
+1. First install the *Docker* and *Docker Compose* tools using standard docker documentation.
+
+    - <https://docs.docker.com/get-docker/>
+    - <https://docs.docker.com/compose/install/>
+
+2. Now setup a new ``Ketchup/Dockerfile`` file with the following content.
+
+    ```Dockerfile
+    FROM docker.io/python:3.9
+
+    RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
+
+    ENV PATH=/root/.local/bin:${PATH}
+    ```
+
+3. Next create the ``Ketchup/docker-compose.yml`` file.
+
+    ```yaml
+    version: "3.8"
+    services:
+    ketchup-webapp:
+        build: .
+        image: poetry-py3.9
+        container_name: ketchup-webapp
+        hostname: ketchup-webapp
+        working_dir: /root/Ketchup
+        # command: ["python", "-m", "ketchup.webapp"]
+        command: ["sh", "-c", "poetry update && poetry run alembic upgrade head && exec poetry run python -m ketchup.webapp"]
+        ports:
+        - "5000:5000"
+        volumes:
+        - ".docker/home-root-cache:/root/.cache"
+        - ".:/root/Ketchup"
+        links:
+        - ketchup-postgres
+        environment:
+        - "KETCHUP_DB_URI=postgresql+asyncpg://ketchupuser:ketchup123@ketchup-postgres/ketchup"
+    ketchup-postgres:
+        image: docker.io/postgres:13
+        container_name: ketchup-postgres
+        hostname: ketchup-postgres
+        volumes:
+        - ".docker/postgres:/var/lib/postgresql/data"
+        environment:
+        - "POSTGRES_PASSWORD=ketchup123"
+        - "POSTGRES_USER=ketchupuser"
+        - "POSTGRES_DB=ketchup"
+    ```
+
 ## Frameworks/Components Reference
 
 [Quart](https://pgjones.gitlab.io/quart/index.html)
@@ -866,3 +922,9 @@ graphql queries.
 
 [Alembic](https://alembic.sqlalchemy.org/en/latest/)
 : A database migration tool for *SQLAlchemy*.
+
+[Docker](https://docs.docker.com/)
+A popular platform for building and operating container images.
+
+[docker-compose](https://docs.docker.com/compose/)
+A tool for defining and running multi-container *Docker* applications.
