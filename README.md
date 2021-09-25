@@ -846,6 +846,25 @@ graphql queries.
     ================================ 3 passed in 0.36s ================================
     ```
 
+## Appendices
+
+### Appendix A: Adding Uvicorn
+
+`Uvicorn` is a common **ASGI** server implementation that integrates easily with *Gunicorn* and is ready for production
+rollouts.
+
+1. Begin by adding *Uvicorn* and standard *uvloop* requirements to the poetry configuration.
+
+    ```sh
+    poetry add uvicorn[standard]
+    ```
+
+2. At this poitn the simplest way to run the web application for development would be as follows:
+
+    ```sh
+    poetry run uvicorn --host 0.0.0.0 --port 5000 --reload ketchup.webapp:app
+    ```
+
 ## Frameworks/Components Reference
 
 [Quart](https://pgjones.gitlab.io/quart/index.html)
@@ -862,3 +881,6 @@ graphql queries.
 
 [Alembic](https://alembic.sqlalchemy.org/en/latest/)
 : A database migration tool for *SQLAlchemy*.
+
+[Uvicorn](https://www.uvicorn.org/)
+An *ASGI* server implementation that uses *uvloop* and *httptools*.
