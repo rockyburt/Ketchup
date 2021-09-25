@@ -10,7 +10,7 @@ Quart = "^0.15.1"
 SQLAlchemy = "^1.4.23"
 asyncpg = "^0.24.0"
 python = "^3.9"
-strawberry-graphql = "^0.77.10"
+strawberry-graphql = "^0.78"
 alembic = "^1.7.3"
 
 [tool.poetry.dev-dependencies]

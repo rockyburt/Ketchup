@@ -481,7 +481,7 @@ typing-extensions = ">=3.7.4"
 
 [[package]]
 name = "strawberry-graphql"
-version = "0.77.10"
+version = "0.78.0"
 description = "A library for creating GraphQL APIs"
 category = "main"
 optional = false
@@ -503,7 +503,7 @@ django = ["django (>=2,<4)", "asgiref (>=3.2,<4.0)"]
 flask = ["flask (>=1.1,<2.0)"]
 opentelemetry = ["opentelemetry-api (<2)", "opentelemetry-sdk (<2)"]
 pydantic = ["pydantic (<2)"]
-sanic = ["sanic (>=20.12.2,<21.0.0)"]
+sanic = ["sanic (>=20.12.2,<22.0.0)"]
 aiohttp = ["aiohttp (>=3.7.4.post0,<4.0.0)"]
 
 [[package]]
@@ -555,7 +555,7 @@ h11 = ">=0.9.0,<1"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "d430a800c8d52401e4d7ffc61371fbf6b8cbbf23ad7972d465f967d4de74e2b5"
+content-hash = "1ed30179ca0ef82432267f341cf37d6c40a7f0246195abc077acb6f3604cf2d2"
 
 [metadata.files]
 aiofiles = [
@@ -899,8 +899,8 @@ sqlalchemy2-stubs = [
     {file = "sqlalchemy2_stubs-0.0.2a15-py3-none-any.whl", hash = "sha256:3da19252c87c1ae6bf0e49c2873e72a6e5684a1ede2490c8b75b78834239258b"},
 ]
 strawberry-graphql = [
-    {file = "strawberry-graphql-0.77.10.tar.gz", hash = "sha256:e55d3f20485faab8e9e50d28376b52bbbaefe1ce6b628cc1c7bff40afdad37b6"},
-    {file = "strawberry_graphql-0.77.10-py3-none-any.whl", hash = "sha256:e0bbd0832d310c52d6f10425eb790db3a667baaf251959bbdfb4860209c37ce7"},
+    {file = "strawberry-graphql-0.78.0.tar.gz", hash = "sha256:47d3f7464e233ce581f71bd1c6dcafc4e98161d3872c2d68f4f42ed0f6a3ce01"},
+    {file = "strawberry_graphql-0.78.0-py3-none-any.whl", hash = "sha256:956d89b3bcc240ac9be77d70d81b19f2af4d3a9bd65d07f02cf82fc6782fce70"},
 ]
 toml = [
     {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},
