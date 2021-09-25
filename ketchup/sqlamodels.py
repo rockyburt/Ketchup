@@ -2,6 +2,7 @@ import asyncio
 import dataclasses
 import datetime
 import typing
+from contextlib import asynccontextmanager
 
 from sqlalchemy import Column, DateTime, Integer, Table, Text
 from sqlalchemy.ext.asyncio import (
@@ -14,11 +15,22 @@ from sqlalchemy.orm import registry, sessionmaker
 from ketchup import base
 
 mapper_registry = registry()
-Base = mapper_registry.generate_base()
 
-async_engine = create_async_engine(base.config.DB_URI, future=True)
-async_session_factory = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)  # type: ignore - having some pyright issues
-make_session = async_scoped_session(async_session_factory, scopefunc=asyncio.current_task)
+_async_engine = create_async_engine(base.config.DB_URI, future=True)
+_async_session_factory = sessionmaker(_async_engine, class_=AsyncSession, expire_on_commit=False)  # type: ignore - having some pyright issues
+
+_get_session = async_scoped_session(_async_session_factory, scopefunc=asyncio.current_task)
+
+
+@asynccontextmanager
+async def atomic_session() -> typing.AsyncIterator[AsyncSession]:
+    async with _get_session() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
 
 
 @mapper_registry.mapped

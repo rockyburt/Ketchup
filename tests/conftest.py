@@ -57,7 +57,7 @@ async def empty_db(session_monkeypatch: pytest.MonkeyPatch):
         async_engine = create_async_engine(newuri, future=True)
         async_session_factory = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)  # type: ignore - having some pyright issues
         make_session = async_scoped_session(async_session_factory, scopefunc=asyncio.current_task)
-        session_monkeypatch.setattr(sqlamodels, "make_session", make_session)
+        session_monkeypatch.setattr(sqlamodels, "_get_session", make_session)
 
         async with async_engine.begin() as conn:
             await conn.run_sync(sqlamodels.mapper_registry.metadata.create_all)

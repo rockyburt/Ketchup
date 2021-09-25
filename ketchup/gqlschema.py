@@ -15,8 +15,8 @@ class Query:
 
     @strawberry.field(name="todos")
     async def _todos_resolver(self) -> list[sqlamodels.Todo]:
-        session = sqlamodels.make_session()
-        items = (await session.execute(select(sqlamodels.Todo))).scalars()
+        async with sqlamodels.atomic_session() as session:
+            items = (await session.execute(select(sqlamodels.Todo))).scalars()
         todos = typing.cast(list[sqlamodels.Todo], items)
         return todos
 
@@ -26,50 +26,44 @@ class TodoOps:
     @strawberry.mutation
     async def add_todo(self, text: str) -> sqlamodels.Todo:
         todo = sqlamodels.Todo(text=text)
-        session = sqlamodels.make_session()
-        session.add(todo)
-        await session.commit()
+        async with sqlamodels.atomic_session() as session:
+            session.add(todo)
         return todo
 
     @strawberry.mutation
     async def remove_todo(self, id: int) -> bool:
-        session = sqlamodels.make_session()
-        item = (await session.execute(select(sqlamodels.Todo).where(sqlamodels.Todo.id == id))).scalars().first()
-        todo = typing.cast(typing.Optional[sqlamodels.Todo], item)
+        async with sqlamodels.atomic_session() as session:
+            item = (await session.execute(select(sqlamodels.Todo).where(sqlamodels.Todo.id == id))).scalars().first()
+            todo = typing.cast(typing.Optional[sqlamodels.Todo], item)
 
-        if todo is None:
-            return False
+            if todo is None:
+                return False
 
-        await session.delete(todo)
-        await session.commit()
+            await session.delete(todo)
         return True
 
     @strawberry.mutation
     async def set_todo_completed(self, id: int, flag: bool = True) -> typing.Optional[sqlamodels.Todo]:
-        session = sqlamodels.make_session()
-        item = (await session.execute(select(sqlamodels.Todo).where(sqlamodels.Todo.id == id))).scalars().first()
-        todo = typing.cast(typing.Optional[sqlamodels.Todo], item)
+        async with sqlamodels.atomic_session() as session:
+            item = (await session.execute(select(sqlamodels.Todo).where(sqlamodels.Todo.id == id))).scalars().first()
+            todo = typing.cast(typing.Optional[sqlamodels.Todo], item)
 
-        if todo is None:
-            return None
+            if todo is None:
+                return None
 
-        todo.completed = datetime.datetime.now(datetime.timezone.utc) if flag else None
-
-        await session.commit()
+            todo.completed = datetime.datetime.now(datetime.timezone.utc) if flag else None
         return todo
 
     @strawberry.mutation
     async def modify_todo_text(self, id: int, text: str) -> typing.Optional[sqlamodels.Todo]:
-        session = sqlamodels.make_session()
-        item = (await session.execute(select(sqlamodels.Todo).where(sqlamodels.Todo.id == id))).scalars().first()
-        todo = typing.cast(typing.Optional[sqlamodels.Todo], item)
+        async with sqlamodels.atomic_session() as session:
+            item = (await session.execute(select(sqlamodels.Todo).where(sqlamodels.Todo.id == id))).scalars().first()
+            todo = typing.cast(typing.Optional[sqlamodels.Todo], item)
 
-        if todo is None:
-            return None
+            if todo is None:
+                return None
 
-        todo.text = text
-
-        await session.commit()
+            todo.text = text
         return todo
 
 
