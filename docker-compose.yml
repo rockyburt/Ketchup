@@ -1,0 +1,28 @@
+version: "3.8"
+services:
+  ketchup-webapp:
+    build: .
+    image: poetry-py3.9
+    container_name: ketchup-webapp
+    hostname: ketchup-webapp
+    working_dir: /root/Ketchup
+    command: ["sh", "-c", "poetry update && poetry run alembic upgrade head && exec poetry run uvicorn --host 0.0.0.0 --port 5000 --reload ketchup.webapp:app"]
+    ports:
+      - "5000:5000"
+    volumes:
+      - ".docker/home-root-cache:/root/.cache"
+      - ".:/root/Ketchup"
+    links:
+      - ketchup-postgres
+    environment:
+      - "KETCHUP_DB_URI=postgresql+asyncpg://ketchupuser:ketchup123@ketchup-postgres/ketchup"
+  ketchup-postgres:
+    image: docker.io/postgres:13
+    container_name: ketchup-postgres
+    hostname: ketchup-postgres
+    volumes:
+      - ".docker/postgres:/var/lib/postgresql/data"
+    environment:
+      - "POSTGRES_PASSWORD=ketchup123"
+      - "POSTGRES_USER=ketchupuser"
+      - "POSTGRES_DB=ketchup"

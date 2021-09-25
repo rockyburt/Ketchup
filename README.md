@@ -340,6 +340,10 @@ It is the author's advice to add the following to help with formatting all code 
 
 ### Part 3a: Persistence with SQLAlchemy and PostgreSQL
 
+Before diving into this next part, now might be a good time to mention the fact that [Docker](https://docs.docker.com/get-started/)
+can make life a lot easier.  There is a sample documented [docker-compose.yml](./docker-compose.yml) file in the root of this github repo that can
+be used to isolate *Python3.9* and *PostgreSQL* runtimes without the need to manually install either (only requirements are Docker and docker-compose).
+
 This is where the project actually starts getting useful.  We are building a **ToDo** application that can persist
 todo records to a PostgreSQL database.  The following steps assume you are within the `Ketchup` directory.
 
@@ -863,6 +867,69 @@ rollouts.
 
     ```sh
     poetry run uvicorn --host 0.0.0.0 --port 5000 --reload ketchup.webapp:app
+
+### Appendix B: Setting up Docker and Docker Compose
+
+Docker enables developers to more easily manage system depdendencies and lock requirements.  In the case of this tutorial,
+it helps setup the required *Python* and *PostgreSQL* versions.
+
+1. First install the *Docker* tool using standard docker documentation.
+
+    - <https://docs.docker.com/get-docker/>
+
+2. While it's possible to install *Docker Compose* separately, it is recommended to install using Poetry for this tutorial.
+
+    ```sh
+    poetry add -D docker-compose
+    ```
+
+3. Now setup a new ``Ketchup/Dockerfile`` file with the following content.
+
+    ```Dockerfile
+    FROM docker.io/python:3.9
+
+    RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
+
+    ENV PATH=/root/.local/bin:${PATH}
+    ```
+
+4. Next create the ``Ketchup/docker-compose.yml`` file.
+
+    ```yaml
+    version: "3.8"
+    services:
+    ketchup-webapp:
+        build: .
+        image: poetry-py3.9
+        container_name: ketchup-webapp
+        hostname: ketchup-webapp
+        working_dir: /root/Ketchup
+        command: ["sh", "-c", "poetry update && poetry run alembic upgrade head && exec poetry run uvicorn --host 0.0.0.0 --port 5000 --reload ketchup.webapp:app"]
+        ports:
+        - "5000:5000"
+        volumes:
+        - ".docker/home-root-cache:/root/.cache"
+        - ".:/root/Ketchup"
+        links:
+        - ketchup-postgres
+        environment:
+        - "KETCHUP_DB_URI=postgresql+asyncpg://ketchupuser:ketchup123@ketchup-postgres/ketchup"
+    ketchup-postgres:
+        image: docker.io/postgres:13
+        container_name: ketchup-postgres
+        hostname: ketchup-postgres
+        volumes:
+        - ".docker/postgres:/var/lib/postgresql/data"
+        environment:
+        - "POSTGRES_PASSWORD=ketchup123"
+        - "POSTGRES_USER=ketchupuser"
+        - "POSTGRES_DB=ketchup"
+    ```
+
+5. Use *docker-compose* to launch the appropriate container images using *Docker*.
+
+    ```sh
+    poetry run docker-compose up
     ```
 
 ## Frameworks/Components Reference
@@ -882,5 +949,13 @@ rollouts.
 [Alembic](https://alembic.sqlalchemy.org/en/latest/)
 : A database migration tool for *SQLAlchemy*.
 
+<<<<<<< HEAD
 [Uvicorn](https://www.uvicorn.org/)
 An *ASGI* server implementation that uses *uvloop* and *httptools*.
+=======
+[Docker](https://docs.docker.com/)
+A popular platform for building and operating container images.
+
+[docker-compose](https://docs.docker.com/compose/)
+A tool for defining and running multi-container *Docker* applications.
+>>>>>>> dev/rocky/docker-support
