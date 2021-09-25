@@ -904,6 +904,7 @@ it helps setup the required *Python* and *PostgreSQL* versions.
         container_name: ketchup-webapp
         hostname: ketchup-webapp
         working_dir: /root/Ketchup
+        tty: true
         command: ["sh", "-c", "poetry update && poetry run alembic upgrade head && exec poetry run uvicorn --host 0.0.0.0 --port 5000 --reload ketchup.webapp:app"]
         ports:
         - "5000:5000"
