@@ -340,6 +340,10 @@ It is the author's advice to add the following to help with formatting all code 
 
 ### Part 3a: Persistence with SQLAlchemy and PostgreSQL
 
+Before diving into this next part, now might be a good time to mention the fact that [Docker](https://docs.docker.com/get-started/)
+can make life a lot easier.  There is a sample documented [docker-compose.yml](./docker-compose.yml) file in the root of this github repo that can
+be used to isolate *Python3.9* and *PostgreSQL* runtimes without the need to manually install either (only requirements are Docker and docker-compose).
+
 This is where the project actually starts getting useful.  We are building a **ToDo** application that can persist
 todo records to a PostgreSQL database.  The following steps assume you are within the `Ketchup` directory.
 
