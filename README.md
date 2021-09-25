@@ -857,12 +857,17 @@ graphql queries.
 Docker enables developers to more easily manage system depdendencies and lock requirements.  In the case of this tutorial,
 it helps setup the required *Python* and *PostgreSQL* versions.
 
-1. First install the *Docker* and *Docker Compose* tools using standard docker documentation.
+1. First install the *Docker* tool using standard docker documentation.
 
     - <https://docs.docker.com/get-docker/>
-    - <https://docs.docker.com/compose/install/>
 
-2. Now setup a new ``Ketchup/Dockerfile`` file with the following content.
+2. While it's possible to install *Docker Compose* separately, it is recommended to install using Poetry for this tutorial.
+
+    ```sh
+    poetry add -D docker-compose
+    ```
+
+3. Now setup a new ``Ketchup/Dockerfile`` file with the following content.
 
     ```Dockerfile
     FROM docker.io/python:3.9
@@ -872,7 +877,7 @@ it helps setup the required *Python* and *PostgreSQL* versions.
     ENV PATH=/root/.local/bin:${PATH}
     ```
 
-3. Next create the ``Ketchup/docker-compose.yml`` file.
+4. Next create the ``Ketchup/docker-compose.yml`` file.
 
     ```yaml
     version: "3.8"
@@ -904,6 +909,12 @@ it helps setup the required *Python* and *PostgreSQL* versions.
         - "POSTGRES_PASSWORD=ketchup123"
         - "POSTGRES_USER=ketchupuser"
         - "POSTGRES_DB=ketchup"
+    ```
+
+5. Use *docker-compose* to launch the appropriate container images using *Docker*.
+
+    ```sh
+    poetry run docker-compose up
     ```
 
 ## Frameworks/Components Reference
