@@ -12,6 +12,13 @@ Part 1 and 2 Source:
 Part 3 Source:
 : <https://github.com/rockyburt/Ketchup/tree/part/3>
 
+## Prerequisites
+
+- A Linux or Linux-like work environment (all steps were tested and run on *Ubuntu 20.04* inside the *WSL* environment of *Windows 10*)
+- A working Python 3.9 installation
+
+**NOTE**: Theoretically these steps will run (using platform/OS-equivalent steps) on most modern OS's but the developer's mileage may vary.
+
 ## `Quart` + `Strawberry-GraphQL` Tutorial
 
 The following tutorial explains how to use *Quart* and *Strawberry-GraphQL* to build a simple web application with
