@@ -183,17 +183,6 @@ category = "dev"
 optional = false
 python-versions = ">=3.6"
 
-[package.dependencies]
-cffi = ">=1.12"
-
-[package.extras]
-docs = ["sphinx (>=1.6.5,!=1.8.0,!=3.1.0,!=3.1.1)", "sphinx-rtd-theme"]
-docstest = ["doc8", "pyenchant (>=1.6.11)", "twine (>=1.12.0)", "sphinxcontrib-spelling (>=4.0.1)"]
-pep8test = ["black", "flake8", "flake8-import-order", "pep8-naming"]
-sdist = ["setuptools-rust (>=0.11.4)"]
-ssh = ["bcrypt (>=3.1.5)"]
-test = ["pytest (>=6.0)", "pytest-cov", "pytest-subtests", "pytest-xdist", "pretend", "iso8601", "pytz", "hypothesis (>=1.11.4,!=3.79.2)"]
-
 [[package]]
 name = "distro"
 version = "1.6.0"
@@ -761,7 +750,7 @@ typing-extensions = ">=3.7.4"
 
 [[package]]
 name = "strawberry-graphql"
-version = "0.78.0"
+version = "0.78.1"
 description = "A library for creating GraphQL APIs"
 category = "main"
 optional = false
@@ -1499,8 +1488,8 @@ sqlalchemy2-stubs = [
     {file = "sqlalchemy2_stubs-0.0.2a15-py3-none-any.whl", hash = "sha256:3da19252c87c1ae6bf0e49c2873e72a6e5684a1ede2490c8b75b78834239258b"},
 ]
 strawberry-graphql = [
-    {file = "strawberry-graphql-0.78.0.tar.gz", hash = "sha256:47d3f7464e233ce581f71bd1c6dcafc4e98161d3872c2d68f4f42ed0f6a3ce01"},
-    {file = "strawberry_graphql-0.78.0-py3-none-any.whl", hash = "sha256:956d89b3bcc240ac9be77d70d81b19f2af4d3a9bd65d07f02cf82fc6782fce70"},
+    {file = "strawberry-graphql-0.78.1.tar.gz", hash = "sha256:70620aeb39e51f02cbac242f1263e6d721efa3c8da4a162273854d3b5d1c2699"},
+    {file = "strawberry_graphql-0.78.1-py3-none-any.whl", hash = "sha256:7865cf33731b0cf5bc2e642214db3c90ba968a6a203bd8c6f066c5fc11840157"},
 ]
 texttable = [
     {file = "texttable-1.6.4-py2.py3-none-any.whl", hash = "sha256:dd2b0eaebb2a9e167d1cefedab4700e5dcbdb076114eed30b58b97ed6b37d6f2"},
